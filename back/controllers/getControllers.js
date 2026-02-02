@@ -2,7 +2,7 @@ const database = require('../database/database')
 
 exports.getTasks = async (request, response) => {
     const userId = request.params.userId
-    console.log(userId)
+    // console.log(userId)
 
     try {
         const result = await database.pool.query(

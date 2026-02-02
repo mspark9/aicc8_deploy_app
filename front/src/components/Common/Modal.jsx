@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { IoMdClose } from "react-icons/io";
 import { useDispatch, useSelector } from 'react-redux';
 import { closeModal } from '../../redux/slices/modalSlice';
+import { fetchPostItem } from '../../redux/slices/apiSlice';
+import { toast } from "react-toastify";
 
 const Modal = () => {
     const dispatch = useDispatch()
@@ -10,7 +12,7 @@ const Modal = () => {
     }
 
     const state = useSelector((state) => state.auth.authData)
-    const userKey = state?.sub;
+    const user = state?.sub;
 
     const [formData, setFormData] = useState({
         title: '',
@@ -18,39 +20,82 @@ const Modal = () => {
         date: '',
         isCompleted: false,
         isImportant: false,
-        userId: userKey,
+        userId: user,
     })
 
-    const handleChange = () => {}
+    const handleChange = (e) => {
+        const {name, value, type, checked} = e.target
+
+        setFormData((prev) => ({
+            ...prev,
+            // input의 타입이 checked일 경우 checked값, 아니면 일반 value값
+            [name]: type === 'checkbox' ? checked : value,
+        }))
+    }
+
+    const handleSubmit = async (e) => {
+        e.preventDefault()  // 기본 기능 차단
+
+        if (!user) {
+            toast.error('잘못된 사용자 입니다.')
+            return
+        }
+
+        if (!formData.title) {
+            toast.error('제목을 입력해 주세요.')
+            return
+        }
+
+        if (!formData.description) {
+            toast.error('내용을 입력해 주세요.')
+            return
+        }
+
+        if (!formData.date) {
+            toast.error('날짜를 입력해 주세요.')
+            return
+        }
+
+        // console.log(formData)
+        try {
+            await dispatch(fetchPostItem(formData)).unwrap()
+            toast.success('할일이 추가되었습니다.')
+        } catch (error) {
+            console.log('Error Post Item Data: ', error)
+            toast.error('할일 추가에 실패했습니다. 콘솔을 확인해 주세요.')
+        }
+
+        handleCloseModal()
+    }
 
   return (
     <div className='modal fixed bg-black bg-opacity-50 w-full h-full left-0 top-0 z-50 flex justify-center items-center'>
         <div className='form-wrapper bg-gray-700 rounded-md w-1/2 flex flex-col items-center relative p-4'>
             <h2 className='text-2xl py-2 border-b border-gray-300 w-fit font-semibold'>코딩하기</h2>
 
-            <form className='w-full' onSubmit={}>
+            <form className='w-full' onSubmit={handleSubmit}>
                 <div className='input-control'>
                     <label htmlFor="title">제목</label>
-                    <input type="text" id='title' name='title' placeholder='제목을 입력해 주세요...' onChange={handleChange} />
+                    <input type="text" id='title' name='title' placeholder='제목을 입력해 주세요...' value={formData.title} onChange={handleChange} />
                 </div>
                 <div className='input-control'>
                     <label htmlFor="description">내용</label>
-                    <textarea name='description' id='description' placeholder='내용을 입력해 주세요...' onChange={handleChange}></textarea>
+                    <textarea name='description' id='description' placeholder='내용을 입력해 주세요...' value={formData.description} onChange={handleChange}></textarea>
                 </div>
                 <div className='input-control'>
                     <label htmlFor="date">입력 날짜</label>
-                    <input type="date" id='date' name='date' onChange={handleChange} />
+                    <input type="date" id='date' name='date' value={formData.date} onChange={handleChange} />
                 </div>
                 <div className='input-control toggler'>
                     <label htmlFor="isCompleted">완료 여부</label>
-                    <input type="checkbox" id='isCompleted' name='isCompleted' onChange={handleChange} />
+                    <input type="checkbox" id='isCompleted' name='isCompleted' checked={formData.isCompleted} onChange={handleChange} />
                 </div>
                 <div className='input-control toggler'>
                     <label htmlFor="isImportant">중요성 여부</label>
-                    <input type="checkbox" id='isImportant' name='isImportant' onChange={handleChange} />
+                    <input type="checkbox" id='isImportant' name='isImportant' checked={formData.isImportant} onChange={handleChange} />
                 </div>
                 <div className='submit-btn flex justify-end'>
-                    <button type='button' className='flex justify-end bg-black py-3 px-6 rounded-md hover:bg-slate-900'>
+                    <button type='submit' className='flex justify-end bg-black py-3 px-6 rounded-md hover:bg-slate-900'>
                         할일 추가하기
                     </button>
                 </div>
