@@ -3,10 +3,12 @@ import { MdEditDocument } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import { useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
-import { fetchGetItem, fetchUpdateCompleted } from '../../redux/slices/apiSlice';
+import { fetchDeleteItem, fetchGetItem, fetchUpdateCompleted } from '../../redux/slices/apiSlice';
+import { openModal } from '../../redux/slices/modalSlice';
 
 const Item = ({task}) => {
     const {_id, title, description, date, iscompleted, isimportant, userid} = task
+    // console.log(task)
     const dispatch = useDispatch()
     const [isCompleted, setIsCompleted] = useState(iscompleted)
 
@@ -59,9 +61,32 @@ const Item = ({task}) => {
         }
     }
 
-    const handleDeleteItem = () => {
+    const handleDeleteItem = async () => {
         const confirm = window.confirm('정말 삭제하시겠습니까?')
-        console.log(confirm)
+        
+        if(!confirm) return
+
+        if(!_id) {
+            toast.error('잘못된 사용자 접근입니다.')
+            return
+        }
+
+        try {
+            await dispatch(fetchDeleteItem(_id)).unwrap()
+            toast.success('삭제가 완료되었습니다.')
+            await dispatch(fetchGetItem(userid)).unwrap()
+        } catch (error) {
+            toast.error('삭제를 실패했습니다. 콘솔을 확인해 주세요.')
+            console.log('Delete Failed: ', error)
+        }
+    }
+
+    const handleDetailOpenModal = () => {
+        dispatch(openModal({modalType: 'details', task}))
+    }
+
+    const handleEditOpenModal = () => {
+        dispatch(openModal({modalType: 'update', task}))
     }
 
   return (
@@ -70,7 +95,7 @@ const Item = ({task}) => {
             <div className='upper'>
                 <h2 className='text-xl font-normal mb-3 relative pb-2 flex justify-between border-b'>
                     <span>{title}</span>
-                    <span className='text-sm py-1 px-3 border border-gray-500 rounded-sm hover:bg-gray-700 cursor-pointer'>자세히</span>
+                    <span className='text-sm py-1 px-3 border border-gray-500 rounded-sm hover:bg-gray-700 cursor-pointer' onClick={handleDetailOpenModal}>자세히</span>
                 </h2>
                 <p>
                     {cutOverText(description, 25, '...')}
@@ -98,7 +123,7 @@ const Item = ({task}) => {
                         }
                     </div>
                     <div className='flex gap-2'>
-                        <button>
+                        <button onClick={handleEditOpenModal}>
                             <MdEditDocument className='w-5 h-5' />
                         </button>
                         <button onClick={handleDeleteItem}>

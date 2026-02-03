@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { POST_TASK_API_URL, GET_TASKS_API_URL, UPDATE_COMPLETED_TASK_API_URL, DELETE_TASK_API_URL } from "../../utils/apiUrls";
-import { deleteRequest, getRequest, patchRequest, postRequest } from "../../utils/requests";
+import { POST_TASK_API_URL, GET_TASKS_API_URL, UPDATE_COMPLETED_TASK_API_URL, DELETE_TASK_API_URL, UPDATE_TASK_API_URL } from "../../utils/apiUrls";
+import { deleteRequest, getRequest, patchRequest, postRequest, putRequest } from "../../utils/requests";
 
 // 공통된 비동기 액션 생성 로직을 별도의 함수로 분리
 const postItemFetchThunk = (actionType, apiURL) => {
@@ -29,7 +29,20 @@ const updateCompletedFetchThunk = (actionType, apiURL) => {
 
 const deleteItemFetchThunk = (actionType, apiURL) => {
     return createAsyncThunk(actionType, async (itemId) => {
-        return await deleteRequest(apiURL, itemId)
+        const options = {
+            method: 'DELETE',
+        }
+        const fullPath = `${apiURL}/${itemId}`
+        return await deleteRequest(fullPath, options)
+    })
+}
+
+const updateItemFetchThunk = (actionType, apiURL) => {
+    return createAsyncThunk(actionType, async (updateData) => {
+        const options = {
+            body: JSON.stringify(updateData),
+        }
+        return await putRequest(apiURL, options)
     })
 }
 
@@ -45,6 +58,9 @@ export const fetchPostItem = postItemFetchThunk('fetchPostItem', POST_TASK_API_U
 // Patch Completed Data Fetch
 export const fetchUpdateCompleted = updateCompletedFetchThunk('fetchUpdateCompleted', UPDATE_COMPLETED_TASK_API_URL)
 
+// Update(Put) Completed Data Fetch
+export const fetchUpdateItem = updateItemFetchThunk('fetchUpdateItem', UPDATE_TASK_API_URL)
+
 const handleFulfilled = (stateKey) => (state, action) => {
     state[stateKey] = action.payload;
 }
@@ -59,6 +75,7 @@ const apisSlice = createSlice({
         getItemData: null,
         updateCompletedData: null,
         deleteItemData: null,
+        updateItemData: null,
     },
     extraReducers: (builder) => {
         builder
@@ -70,6 +87,8 @@ const apisSlice = createSlice({
             .addCase(fetchUpdateCompleted.rejected, handleRejected)
             .addCase(fetchDeleteItem.fulfilled, handleFulfilled('deleteItemData'))
             .addCase(fetchDeleteItem.rejected, handleRejected)
+            .addCase(fetchUpdateItem.fulfilled, handleFulfilled('updateItemData'))
+            .addCase(fetchUpdateItem.rejected, handleRejected)
     }
 })
 
