@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { IoMdClose } from "react-icons/io";
 import { useDispatch, useSelector } from 'react-redux';
 import { closeModal } from '../../redux/slices/modalSlice';
-import { fetchPostItem } from '../../redux/slices/apiSlice';
+import { fetchGetItem, fetchPostItem } from '../../redux/slices/apiSlice';
 import { toast } from "react-toastify";
 
 const Modal = () => {
@@ -60,12 +60,15 @@ const Modal = () => {
         try {
             await dispatch(fetchPostItem(formData)).unwrap()
             toast.success('할일이 추가되었습니다.')
+
         } catch (error) {
             console.log('Error Post Item Data: ', error)
             toast.error('할일 추가에 실패했습니다. 콘솔을 확인해 주세요.')
         }
 
         handleCloseModal()
+
+        await dispatch(fetchGetItem(user)).unwrap()
     }
 
   return (
